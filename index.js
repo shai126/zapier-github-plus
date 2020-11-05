@@ -4,6 +4,8 @@ const {
   afters = [],
 } = require('./authentication');
 
+const reverse = require('./creates/reverse');
+
 module.exports = {
   // This is just shorthand to reference the installed dependencies you have.
   // Zapier will need to know these before we can upload.
@@ -23,7 +25,9 @@ module.exports = {
   searches: {},
 
   // If you want your creates to show up, you better include it here!
-  creates: {},
+  creates: {
+    [reverse.key]: reverse
+  },
 
   resources: {},
 };
