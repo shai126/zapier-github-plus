@@ -6,7 +6,7 @@
 // response data for testing purposes. Your connection label can access any data
 // from the returned response using the `json.` prefix. eg: `{{json.username}}`.
 const test = (z, bundle) =>
-  z.request({ url: 'https://auth-json-server.zapier-staging.com/me' });
+  z.request({ url: 'https://api.github.com/user' });
 
 // This function runs after every outbound request. You can use it to check for
 // errors or modify the response. You can have as many as you need. They'll need
@@ -15,7 +15,7 @@ const handleBadResponses = (response, z, bundle) => {
   if (response.status === 401) {
     throw new z.errors.Error(
       // This message is surfaced to the user
-      'The API Key you supplied is incorrect',
+      'The access token you supplied is incorrect',
       'AuthenticationError',
       response.status
     );
@@ -27,13 +27,8 @@ const handleBadResponses = (response, z, bundle) => {
 // This function runs before every outbound request. You can have as many as you
 // need. They'll need to each be registered in your index.js file.
 const includeApiKey = (request, z, bundle) => {
-  if (bundle.authData.apiKey) {
-    // Use these lines to include the API key in the querystring
-    request.params = request.params || {};
-    request.params.api_key = bundle.authData.apiKey;
-
-    // If you want to include the API key in the header instead, uncomment this:
-    // request.headers.Authorization = bundle.authData.apiKey;
+  if (bundle.authData.accessToken) {
+    request.headers.Authorization = `Basic ${Buffer.from(`:${bundle.authData.accessToken}`).toString('base64')}`;
   }
 
   return request;
@@ -47,7 +42,13 @@ module.exports = {
 
     // Define any input app's auth requires here. The user will be prompted to enter
     // this info when they connect their account.
-    fields: [{ key: 'apiKey', label: 'API Key', required: true }],
+    fields: [
+      {
+        key: 'accessToken',
+        label: 'Personal Access Token (or OAuth access token)',
+        required: true
+      },
+    ],
 
     // The test method allows Zapier to verify that the credentials a user provides
     // are valid. We'll execute this method whenver a user connects their account for
@@ -60,7 +61,7 @@ module.exports = {
     // be `{{X}}`. This can also be a function that returns a label. That function has
     // the standard args `(z, bundle)` and data returned from the test can be accessed
     // in `bundle.inputData.X`.
-    connectionLabel: '{{json.username}}',
+    connectionLabel: '{{json.login}}',
   },
   befores: [includeApiKey],
   afters: [handleBadResponses],
